@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledgerkeep">
+<meta name="theme-color" content="#0F1218">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>Ledgerkeep</title>
+<style>
+:root{
+  --ink:#0F1218; --slab:#161B23; --slab2:#1D242E; --line:#2B3441;
+  --paper:#E6E4DE; --mute:#8A93A0; --brass:#C9A227; --jade:#3E9C7E;
+  --rust:#C4553D; --violet:#7B6BB0;
+  --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --pad:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
+input,select,textarea{background:var(--slab2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;outline:none}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+textarea{min-height:110px;font-family:var(--mono);font-size:13px}
+label{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin:0 0 5px}
+.btn{background:var(--slab2);border:1px solid var(--line);border-radius:8px;padding:11px 14px;cursor:pointer;font-size:14px;font-weight:500;width:100%}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#17130A;font-weight:700}
+.btn.danger{border-color:#5A2A20;color:#E08772}
+.btn.sm{padding:7px 10px;font-size:13px;width:auto}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:12px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pos{color:var(--jade)} .neg{color:var(--rust)} .mute{color:var(--mute)}
+.hide{display:none!important}
+#lock{position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;justify-content:center;padding:28px;z-index:60;overflow-y:auto}
+.keyplate{border:1px solid var(--line);border-radius:14px;padding:26px 22px;background:linear-gradient(180deg,#181D26,#12161D)}
+.mark{font-family:var(--display);font-size:34px;line-height:1;letter-spacing:-.02em}
+.mark em{font-style:normal;color:var(--brass)}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);margin-top:10px}
+.rule{height:1px;background:var(--line);margin:20px 0}
+.warn{font-size:12.5px;color:var(--mute);line-height:1.55}
+header{position:sticky;top:0;z-index:20;background:rgba(15,18,24,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) var(--pad) 10px}
+.hbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hbar .mark{font-size:19px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--jade);display:inline-block;margin-right:6px;vertical-align:middle}
+.dot.dirty{background:var(--brass)}
+main{padding:var(--pad);padding-bottom:104px;max-width:760px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(15,18,24,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px 4px calc(env(safe-area-inset-bottom) + 6px);scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;background:none;border:0;color:var(--mute);padding:8px 12px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);cursor:pointer;border-radius:7px;position:relative}
+nav button.on{color:var(--brass);background:rgba(201,162,39,.1)}
+nav button .badge{position:absolute;top:2px;right:4px;background:var(--rust);color:#fff;border-radius:9px;font-size:9px;padding:0 4px;line-height:14px}
+.card{background:var(--slab);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:19px;margin-bottom:3px}
+.card .sub{font-size:12.5px;color:var(--mute);margin-bottom:14px}
+.stat{font-family:var(--mono);font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat.sm{font-size:19px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--mute)}
+.kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.pill{display:inline-block;font-size:10.5px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--slab2);border:1px solid var(--line);color:var(--mute)}
+.pill.due{border-color:var(--brass);color:var(--brass)}
+.pill.late{border-color:var(--rust);color:var(--rust)}
+.item{border-bottom:1px solid var(--line);padding:11px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.item:last-child{border-bottom:0}
+.item .t{font-size:14.5px}
+.item .m{font-size:11.5px;color:var(--mute);margin-top:3px;font-family:var(--mono)}
+.item .amt{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14.5px}
+.bars{margin-top:6px}
+.bar{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:13px}
+.bar .lbl{width:34%;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{flex:1;height:9px;background:var(--slab2);border-radius:5px;overflow:hidden}
+.bar .fill{height:100%;background:var(--brass);border-radius:5px}
+.bar .val{font-family:var(--mono);font-size:11.5px;width:74px;text-align:right}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+th{text-align:right;color:var(--mute);font-weight:400;padding:6px 4px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+th:first-child,td:first-child{text-align:left}
+td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.empty{text-align:center;color:var(--mute);font-size:13.5px;padding:22px 8px;border:1px dashed var(--line);border-radius:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;background:var(--slab2);border:1px solid var(--brass);padding:10px 16px;border-radius:9px;font-size:13.5px;z-index:80;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:88vw;text-align:center}
+svg{display:block;max-width:100%}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.seg button{flex:1;background:var(--slab2);border:0;color:var(--mute);padding:9px 6px;font-size:12.5px;cursor:pointer}
+.seg button.on{background:var(--brass);color:#17130A;font-weight:600}
+details{border:1px solid var(--line);border-radius:9px;padding:11px 13px;margin-bottom:10px;background:var(--slab2)}
+summary{cursor:pointer;font-size:14px;font-weight:500}
+details[open] summary{margin-bottom:10px;color:var(--brass)}
+code{font-family:var(--mono);font-size:11.5px;background:var(--slab2);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="keyplate">
+    <div class="mark">Ledger<em>keep</em></div>
+    <div class="tag">Sealed · Offline · Yours</div>
+    <div class="rule"></div>
+    <div id="lockMode"></div>
+    <div class="field"><label id="ppLabel">Passphrase</label><input type="password" id="pp" autocomplete="current-password" placeholder="••••••••••••"></div>
+    <div class="field hide" id="pp2wrap"><label>Repeat passphrase</label><input type="password" id="pp2" autocomplete="new-password"></div>
+    <button class="btn primary" id="unlockBtn">Unlock</button>
+    <div style="height:10px"></div>
+    <div class="row">
+      <button class="btn sm" id="openFileBtn" style="width:100%">Open vault file</button>
+      <button class="btn sm" id="newVaultBtn" style="width:100%">Start new vault</button>
+    </div>
+    <input type="file" id="fileIn" accept=".lkv,.json,application/json" class="hide">
+    <div class="rule"></div>
+    <p class="warn">AES‑256‑GCM, key stretched from your passphrase with PBKDF2‑SHA256 over 600,000 rounds. The passphrase is never written anywhere. <strong>Lose it and the data is gone — there is no recovery, by design.</strong></p>
+    <p class="warn" id="lockErr" style="color:var(--rust)"></p>
+  </div>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <div class="hbar">
+    <div class="mark">Ledger<em>keep</em></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="pill"><span class="dot" id="dot"></span><span id="syncTxt">saved</span></span>
+      <button class="btn sm" id="saveBtn">Save</button>
+      <button class="btn sm" id="lockBtn">Lock</button>
+    </div>
+  </div>
+</header>
+<nav id="nav"></nav>
+<main id="view"></main>
+</div>
+
+<script>
+"use strict";
+/* ═══════════ CRYPTO ═══════════ */
+const enc = new TextEncoder(), dec = new TextDecoder();
+const ITER = 600000;
+async function deriveKey(pass, salt){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+const b64 = a => btoa(String.fromCharCode(...new Uint8Array(a)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function seal(obj, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt);
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, enc.encode(JSON.stringify(obj)));
+  return JSON.stringify({fmt:"ledgerkeep-vault", v:1, kdf:"PBKDF2-SHA256", iter:ITER, salt:b64(salt), iv:b64(iv), ct:b64(ct)});
+}
+async function unseal(text, pass){
+  const f = JSON.parse(text);
+  if(f.fmt !== "ledgerkeep-vault") throw new Error("Not a Ledgerkeep vault file.");
+  const key = await deriveKey(pass, unb64(f.salt));
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:unb64(f.iv)}, key, unb64(f.ct));
+  return JSON.parse(dec.decode(pt));
+}
+
+/* ═══════════ STATE ═══════════ */
+const LS_KEY = "ledgerkeep.vault.v1";
+let PASS = null, DB = null, dirty = false, tab = "home";
+const VIEWS = {}, WIRE = {};
+const CUR = {INR:"₹", AED:"د.إ", USD:"$", EUR:"€", GBP:"£", HTG:"G"};
+
+function blankDB(){
+  return {
+    meta:{created:today(), base:"INR"},
+    rates:{INR:1, AED:23.5, USD:87, EUR:95, GBP:110, HTG:0.66},
+    txns:[], loans:[], assets:[], watch:[], bills:[],
+    metals:{gold24:9800, gold22:8980, silver:118},
+    tax:{gross:0, salaried:true, age:"below60", d80c:0, d80d:0, nps:0, hra:0, homeLoan:0, other:0},
+    cats:{
+      income:["Salary","Business","Consulting","Interest","Dividend","Rent received","Capital gain","Loan received","Refund","Other income"],
+      expense:["Rent","Groceries","Dining","Transport","Fuel","Utilities","Telecom","Health","Insurance","Education","Childcare","Shopping","Travel","Subscriptions","Business expense","Freight & logistics","Customs & duty","Professional fees","Bank charges","Tax paid","EMI","Loan given","Gifts & donation","Household help","Other expense"]
+    },
+    rules:[
+      {kw:"salary,payroll,credit sal", cat:"Salary", type:"income"},
+      {kw:"swiggy,zomato,restaurant,cafe,talabat", cat:"Dining", type:"expense"},
+      {kw:"bigbasket,dmart,grocery,carrefour,lulu,blinkit,zepto", cat:"Groceries", type:"expense"},
+      {kw:"uber,ola,careem,metro,taxi", cat:"Transport", type:"expense"},
+      {kw:"petrol,fuel,adnoc,enoc,indian oil", cat:"Fuel", type:"expense"},
+      {kw:"electricity,dewa,water,gas bill,mseb,sewa", cat:"Utilities", type:"expense"},
+      {kw:"airtel,jio,vodafone,etisalat,du bill,broadband", cat:"Telecom", type:"expense"},
+      {kw:"emi,loan repay,instalment", cat:"EMI", type:"expense"},
+      {kw:"netflix,spotify,prime,icloud,subscription", cat:"Subscriptions", type:"expense"},
+      {kw:"insurance,premium,lic", cat:"Insurance", type:"expense"},
+      {kw:"pharmacy,hospital,clinic,apollo,medical", cat:"Health", type:"expense"},
+      {kw:"rent", cat:"Rent", type:"expense"},
+      {kw:"interest credit,fd interest,int.pd", cat:"Interest", type:"income"},
+      {kw:"dividend", cat:"Dividend", type:"income"},
+      {kw:"charge,fee,gst on,sms chg", cat:"Bank charges", type:"expense"}
+    ]
+  };
+}
+const today = () => new Date().toISOString().slice(0,10);
+const uid = () => Math.random().toString(36).slice(2,10);
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n = v => { const x = parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isFinite(x)?x:0; };
+function money(v, cur){
+  cur = cur || DB.meta.base;
+  const s = (CUR[cur]||cur+" "); const neg = v < 0; v = Math.abs(v);
+  const d = v >= 1000 ? 0 : 2;
+  return (neg?"−":"") + s + v.toLocaleString("en-IN",{minimumFractionDigits:d, maximumFractionDigits:d});
+}
+const toBase = (amt,cur) => amt * (DB.rates[cur]||1) / (DB.rates[DB.meta.base]||1);
+function mark(){ dirty = true; const d=document.getElementById("dot"); if(d){d.classList.add("dirty"); document.getElementById("syncTxt").textContent="unsaved";} autoStash(); }
+function clean(){ dirty=false; const d=document.getElementById("dot"); if(d){d.classList.remove("dirty"); document.getElementById("syncTxt").textContent="saved";} }
+function toast(msg){ const el=document.createElement("div"); el.className="toast"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2800); }
+const monthOf = d => (d||"").slice(0,7);
+const daysBetween = (a,b) => Math.round((new Date(b+"T00:00:00") - new Date(a+"T00:00:00"))/86400000);
+
+let stashTimer = null;
+function autoStash(){ clearTimeout(stashTimer); stashTimer = setTimeout(stashNow, 1200); }
+async function stashNow(){ if(!PASS||!DB) return; try{ localStorage.setItem(LS_KEY, await seal(DB, PASS)); }catch(e){} }
+function hasStash(){ try{ return !!localStorage.getItem(LS_KEY); }catch(e){ return false; } }
+
+/* ═══════════ LOCK ═══════════ */
+let pendingFileText = null, creating = false;
+function paintLock(){
+  const m = document.getElementById("lockMode"), btn = document.getElementById("unlockBtn");
+  document.getElementById("pp2wrap").classList.toggle("hide", !creating);
+  if(creating){ m.innerHTML = `<p class="warn">Choose a passphrase for a new vault. Four unrelated words beats one clever word.</p>`; btn.textContent = "Create vault"; }
+  else if(pendingFileText){ m.innerHTML = `<p class="warn">Vault file loaded. Enter its passphrase.</p>`; btn.textContent = "Decrypt vault"; }
+  else if(hasStash()){ m.innerHTML = `<p class="warn">An encrypted vault is stored on this device.</p>`; btn.textContent = "Unlock"; }
+  else { m.innerHTML = `<p class="warn">No vault here yet. Open a vault file from iCloud Drive, or start a new one.</p>`; btn.textContent = "Unlock"; }
+}
+document.getElementById("newVaultBtn").onclick = () => { creating = true; pendingFileText = null; paintLock(); document.getElementById("pp").focus(); };
+document.getElementById("openFileBtn").onclick = () => document.getElementById("fileIn").click();
+document.getElementById("fileIn").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { pendingFileText = r.result; creating = false; paintLock(); document.getElementById("pp").focus(); };
+  r.readAsText(f);
+};
+document.getElementById("unlockBtn").onclick = doUnlock;
+["pp","pp2"].forEach(id => document.getElementById(id).addEventListener("keydown", e => { if(e.key==="Enter") doUnlock(); }));
+async function doUnlock(){
+  const errEl = document.getElementById("lockErr"), p = document.getElementById("pp").value;
+  errEl.textContent = "";
+  if(p.length < 8){ errEl.textContent = "Use at least 8 characters."; return; }
+  const btn = document.getElementById("unlockBtn"), label = btn.textContent;
+  btn.textContent = "Working…"; btn.disabled = true;
+  try{
+    if(creating){
+      if(p !== document.getElementById("pp2").value) throw new Error("The two passphrases do not match.");
+      DB = blankDB(); PASS = p; await stashNow();
+    } else {
+      const src = pendingFileText || localStorage.getItem(LS_KEY);
+      if(!src) throw new Error("Nothing to unlock. Open a vault file or start a new one.");
+      DB = migrate(await unseal(src, p)); PASS = p; await stashNow();
+    }
+    document.getElementById("pp").value = document.getElementById("pp2").value = "";
+    pendingFileText = null; creating = false;
+    document.getElementById("lock").classList.add("hide");
+    document.getElementById("app").classList.remove("hide");
+    buildNav(); go("home"); clean();
+  }catch(err){
+    errEl.textContent = /operation-specific|decrypt/i.test(err.message) ? "Wrong passphrase, or the file is damaged." : err.message;
+  }finally{ btn.textContent = label; btn.disabled = false; }
+}
+function migrate(d){ const b = blankDB(); return Object.assign(b, d, {cats:Object.assign(b.cats, d.cats||{})}); }
+document.getElementById("lockBtn").onclick = () => {
+  PASS = null; DB = null;
+  document.getElementById("app").classList.add("hide");
+  document.getElementById("lock").classList.remove("hide");
+  paintLock();
+};
+document.getElementById("saveBtn").onclick = exportVault;
+async function exportVault(){
+  const blob = new Blob([await seal(DB, PASS)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `Ledgerkeep-${today()}.lkv`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  stashNow(); clean(); toast("Vault exported — save it to iCloud Drive");
+}
+
+/* ═══════════ NAV ═══════════ */
+const TABS = [["home","Overview"],["add","Add"],["bills","Bills"],["ledger","Ledger"],["import","Import"],
+  ["patterns","Patterns"],["loans","Loans"],["assets","Metals & FX"],["tax","India tax"],["invest","Investing"],["settings","Settings"]];
+function buildNav(){
+  const due = billsDue().length;
+  document.getElementById("nav").innerHTML = TABS.map(([k,l]) =>
+    `<button data-t="${k}">${l}${k==="bills"&&due?`<span class="badge">${due}</span>`:""}</button>`).join("");
+  document.getElementById("nav").onclick = e => { const b = e.target.closest("button"); if(b) go(b.dataset.t); };
+}
+function go(t){
+  tab = t; buildNav();
+  [...document.querySelectorAll("#nav button")].forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  document.getElementById("view").innerHTML = VIEWS[t]();
+  (WIRE[t] || (()=>{}))();
+  window.scrollTo(0,0);
+}
+const rerender = () => go(tab);
+
+/* ═══════════ DERIVED ═══════════ */
+function totals(list){ let inc=0, exp=0; list.forEach(t => { const v = toBase(t.amt,t.cur); t.type==="income" ? inc+=v : exp+=v; }); return {inc,exp,net:inc-exp}; }
+function byCat(list, type){
+  const m = {}; list.filter(t => t.type===type).forEach(t => m[t.cat] = (m[t.cat]||0) + toBase(t.amt,t.cur));
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function byMonth(months){
+  const out = [], d = new Date();
+  for(let i = months-1; i >= 0; i--){
+    const dt = new Date(d.getFullYear(), d.getMonth()-i, 1);
+    const key = dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0");
+    out.push({key, label: dt.toLocaleString("en",{month:"short"}), ...totals(DB.txns.filter(x => monthOf(x.date)===key))});
+  }
+  return out;
+}
+function barRows(pairs, color){
+  if(!pairs.length) return `<div class="empty">Nothing recorded yet.</div>`;
+  const max = pairs[0][1] || 1;
+  return `<div class="bars">` + pairs.slice(0,12).map(([k,v]) => `
+    <div class="bar"><div class="lbl">${esc(k)}</div>
+      <div class="track"><div class="fill" style="width:${(v/max*100).toFixed(1)}%;background:${color||"var(--brass)"}"></div></div>
+      <div class="val">${money(v)}</div></div>`).join("") + `</div>`;
+}
+function sparkChart(series){
+  const W=320,H=130,pad=18;
+  const max = Math.max(1, ...series.map(s => Math.max(s.inc, s.exp)));
+  const bw = (W-pad*2)/series.length; let bars = "";
+  series.forEach((s,i) => {
+    const x = pad+i*bw, hi = (s.inc/max)*(H/2-14), he = (s.exp/max)*(H/2-14);
+    bars += `<rect x="${x+bw*.16}" y="${H/2-hi}" width="${bw*.30}" height="${Math.max(hi,1)}" rx="2" fill="#3E9C7E"/>`;
+    bars += `<rect x="${x+bw*.52}" y="${H/2}" width="${bw*.30}" height="${Math.max(he,1)}" rx="2" fill="#C4553D"/>`;
+    bars += `<text x="${x+bw/2}" y="${H-2}" fill="#8A93A0" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle">${s.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly income and expense">
+    <line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#2B3441"/>${bars}</svg>`;
+}
+function txRow(t){
+  return `<div class="item"><div><div class="t">${esc(t.cat)}${t.note?` <span class="mute">· ${esc(t.note)}</span>`:""}</div>
+    <div class="m">${t.date} · ${esc(t.reason||"—")}</div></div>
+    <div class="amt ${t.type==="income"?"pos":"neg"}">${t.type==="income"?"+":"−"}${money(t.amt,t.cur).replace("−","")}</div></div>`;
+}
+
+/* ═══════════ BILLS ═══════════ */
+const FREQ = {weekly:"Weekly", fortnightly:"Every 2 weeks", monthly:"Monthly", quarterly:"Quarterly",
+              half:"Every 6 months", yearly:"Yearly", custom:"Every N days", once:"One-off"};
+function addMonthsTo(dateStr, k, anchorDay){
+  const [y,m] = dateStr.split("-").map(Number);
+  let M = m + k, Y = y + Math.floor((M-1)/12);
+  M = ((M-1) % 12 + 12) % 12 + 1;
+  const last = new Date(Y, M, 0).getDate();
+  return `${Y}-${String(M).padStart(2,"0")}-${String(Math.min(anchorDay, last)).padStart(2,"0")}`;
+}
+function addDaysTo(dateStr, k){ const d = new Date(dateStr+"T00:00:00"); d.setDate(d.getDate()+k); return d.toISOString().slice(0,10); }
+function nextDue(b){
+  const anchor = b.anchorDay || Number(b.due.slice(8,10));
+  switch(b.freq){
+    case "weekly": return addDaysTo(b.due, 7);
+    case "fortnightly": return addDaysTo(b.due, 14);
+    case "monthly": return addMonthsTo(b.due, 1, anchor);
+    case "quarterly": return addMonthsTo(b.due, 3, anchor);
+    case "half": return addMonthsTo(b.due, 6, anchor);
+    case "yearly": return addMonthsTo(b.due, 12, anchor);
+    case "custom": return addDaysTo(b.due, Math.max(1, n(b.days)||30));
+    default: return null;
+  }
+}
+const billStatus = b => { const d = daysBetween(today(), b.due); return d < 0 ? "late" : d <= 7 ? "due" : "ok"; };
+function billsDue(){ if(!DB) return []; return DB.bills.filter(b => !b.done && billStatus(b) !== "ok"); }
+function payBill(b, amt){
+  const paid = amt > 0 ? amt : n(b.amt);
+  DB.txns.push({id:uid(), type:"expense", date:today(), amt:paid, cur:b.cur, cat:b.cat,
+    reason:b.name, pat:"recurring", acct:b.acct||"", note:"bill payment"});
+  (b.history = b.history || []).push({date:today(), amt:paid, due:b.due});
+  const nd = nextDue(b);
+  if(nd) b.due = nd; else b.done = true;
+  mark();
+}
+VIEWS.bills = () => {
+  const list = [...DB.bills].sort((a,b) => (a.done?1:0)-(b.done?1:0) || a.due.localeCompare(b.due));
+  const monthTotal = DB.bills.filter(b => !b.done && monthOf(b.due) === monthOf(today()))
+    .reduce((s,b) => s + toBase(n(b.amt), b.cur), 0);
+  const annual = DB.bills.filter(b => !b.done).reduce((s,b) => {
+    const per = {weekly:52, fortnightly:26, monthly:12, quarterly:4, half:2, yearly:1, custom:365/(n(b.days)||30), once:0}[b.freq] || 0;
+    return s + toBase(n(b.amt), b.cur) * per;
+  }, 0);
+  const card = b => {
+    const st = billStatus(b), d = daysBetween(today(), b.due);
+    const when = b.done ? "settled" : d < 0 ? `${-d} day${d===-1?"":"s"} overdue` : d === 0 ? "due today" : `in ${d} day${d===1?"":"s"}`;
+    return `<details ${st!=="ok"&&!b.done?"open":""}>
+      <summary>${esc(b.name)} · ${money(n(b.amt), b.cur)} <span class="pill ${st==="late"?"late":st==="due"?"due":""}">${when}</span></summary>
+      <div class="kv"><span class="k">Next due</span><span class="v">${b.due}</span></div>
+      <div class="kv"><span class="k">Repeats</span><span class="v">${FREQ[b.freq]}${b.freq==="custom"?` (${b.days}d)`:""}</span></div>
+      <div class="kv"><span class="k">Category</span><span class="v">${esc(b.cat)}</span></div>
+      <div class="kv"><span class="k">Paid from</span><span class="v">${esc(b.acct||"—")}</span></div>
+      <div class="kv"><span class="k">Times paid</span><span class="v">${(b.history||[]).length}</span></div>
+      ${b.note?`<div style="margin-top:8px;font-size:13px;color:var(--mute)">${esc(b.note)}</div>`:""}
+      <div style="height:12px"></div>
+      <div class="row">
+        <input type="number" inputmode="decimal" placeholder="${n(b.amt)}" data-payamt="${b.id}">
+        <button class="btn sm primary" data-paid="${b.id}">Mark paid</button>
+      </div>
+      <div style="height:8px"></div>
+      <div class="row">
+        <button class="btn sm" data-skip="${b.id}" style="width:100%">Skip to next</button>
+        <button class="btn sm danger" data-bdel="${b.id}" style="width:100%">Delete</button>
+      </div>
+      ${(b.history||[]).length ? `<div style="height:12px"></div><div class="scroll"><table><thead><tr><th>Paid on</th><th>Was due</th><th>Amount</th></tr></thead><tbody>
+        ${b.history.slice(-8).reverse().map(h=>`<tr><td>${h.date}</td><td>${h.due||"—"}</td><td>${n(h.amt).toFixed(0)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    </details>`;
+  };
+  return `
+  <div class="card">
+    <div class="sub">Committed this month · ${DB.bills.filter(b=>!b.done).length} live bills</div>
+    <div class="stat">${money(monthTotal)}</div>
+    <div class="kv" style="margin-top:12px"><span class="k">Annualised commitment</span><span class="v">${money(annual)}</span></div>
+    <div class="kv"><span class="k">Share of a typical month's income</span><span class="v">${(() => {
+      const m = byMonth(6).filter(x=>x.inc); const avg = m.length ? m.reduce((s,x)=>s+x.inc,0)/m.length : 0;
+      return avg ? ((annual/12)/avg*100).toFixed(0)+"%" : "—"; })()}</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Add a bill</h2>
+    <div class="sub">Marking one paid writes the expense into your ledger and rolls the date forward on its own.</div>
+    <div class="grid2">
+      <div class="field"><label>What</label><input id="b_name" placeholder="DEWA electricity"></div>
+      <div class="field"><label>Amount</label><input type="number" inputmode="decimal" id="b_amt"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Currency</label><select id="b_cur">${Object.keys(CUR).map(c=>`<option ${c===DB.meta.base?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Category</label><select id="b_cat">${DB.cats.expense.map(c=>`<option ${c==="Utilities"?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Next due</label><input type="date" id="b_due" value="${today()}"></div>
+      <div class="field"><label>Repeats</label><select id="b_freq">${Object.entries(FREQ).map(([k,v])=>`<option value="${k}" ${k==="monthly"?"selected":""}>${v}</option>`).join("")}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Every N days</label><input type="number" id="b_days" value="30"></div>
+      <div class="field"><label>Paid from</label><input id="b_acct" placeholder="HDFC / ENBD"></div>
+    </div>
+    <div class="field"><label>Note</label><input id="b_note" placeholder="account number, autopay mandate, anything"></div>
+    <button class="btn primary" id="b_add">Add bill</button>
+  </div>
+
+  <div class="card">
+    <h2>Get it to nag you</h2>
+    <div class="sub">A web app on iOS cannot reliably push notifications — Apple restricts that. So export the schedule instead.</div>
+    <button class="btn" id="b_ics">Export bills to Calendar (.ics)</button>
+    <p class="warn" style="margin-top:10px">Open the downloaded file and Apple Calendar will add every bill as a repeating all‑day event with an alert the day before at 9am. Delete and re-export whenever amounts or dates change.</p>
+  </div>
+
+  <div class="card">
+    <h2>Schedule</h2>
+    ${list.length ? list.map(card).join("") : `<div class="empty">No bills yet. Add rent, utilities, insurance premiums, EMIs, school fees, subscriptions — anything that arrives on a clock.</div>`}
+  </div>`;
+};
+WIRE.bills = () => {
+  document.getElementById("b_add").onclick = () => {
+    const name = document.getElementById("b_name").value.trim();
+    if(!name) return toast("Give the bill a name");
+    const due = document.getElementById("b_due").value;
+    DB.bills.push({id:uid(), name, amt:n(document.getElementById("b_amt").value),
+      cur:document.getElementById("b_cur").value, cat:document.getElementById("b_cat").value,
+      due, anchorDay:Number(due.slice(8,10)), freq:document.getElementById("b_freq").value,
+      days:n(document.getElementById("b_days").value)||30, acct:document.getElementById("b_acct").value.trim(),
+      note:document.getElementById("b_note").value.trim(), history:[]});
+    mark(); toast("Bill added"); rerender();
+  };
+  document.getElementById("b_ics").onclick = exportICS;
+  document.getElementById("view").addEventListener("click", e => {
+    const p = e.target.closest("[data-paid]");
+    if(p){ const b = DB.bills.find(x=>x.id===p.dataset.paid);
+      payBill(b, n(document.querySelector(`[data-payamt="${b.id}"]`).value));
+      toast(`Logged · next due ${b.done?"—":b.due}`); rerender(); return; }
+    const s = e.target.closest("[data-skip]");
+    if(s){ const b = DB.bills.find(x=>x.id===s.dataset.skip); const nd = nextDue(b);
+      if(nd){ b.due = nd; mark(); rerender(); } else toast("One-off bills do not repeat"); return; }
+    const d = e.target.closest("[data-bdel]");
+    if(d){ if(!confirm("Delete this bill and its payment history?")) return;
+      DB.bills = DB.bills.filter(x=>x.id!==d.dataset.bdel); mark(); rerender(); }
+  });
+};
+function exportICS(){
+  const rule = {weekly:"FREQ=WEEKLY", fortnightly:"FREQ=WEEKLY;INTERVAL=2", monthly:"FREQ=MONTHLY",
+    quarterly:"FREQ=MONTHLY;INTERVAL=3", half:"FREQ=MONTHLY;INTERVAL=6", yearly:"FREQ=YEARLY", custom:null, once:null};
+  const stamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  let out = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Ledgerkeep//EN","CALSCALE:GREGORIAN"];
+  DB.bills.filter(b => !b.done).forEach(b => {
+    const dt = b.due.replace(/-/g,"");
+    const r = b.freq === "custom" ? `FREQ=DAILY;INTERVAL=${Math.max(1,n(b.days)||30)}` : rule[b.freq];
+    out.push("BEGIN:VEVENT", `UID:${b.id}@ledgerkeep`, `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${dt}`, `SUMMARY:Pay ${b.name} · ${money(n(b.amt), b.cur)}`,
+      `DESCRIPTION:${(b.acct?"From "+b.acct+". ":"")}${b.note||""}`.slice(0,300));
+    if(r) out.push(`RRULE:${r}`);
+    out.push("BEGIN:VALARM","TRIGGER:-P1DT15H","ACTION:DISPLAY",`DESCRIPTION:${b.name} due tomorrow`,"END:VALARM","END:VEVENT");
+  });
+  out.push("END:VCALENDAR");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([out.join("\r\n")], {type:"text/calendar"}));
+  a.download = "ledgerkeep-bills.ics"; a.click();
+  toast("Open the file to add it to Calendar");
+}
+
+/* ═══════════ VIEWS ═══════════ */
+VIEWS.home = () => {
+  const mk = monthOf(today());
+  const m = totals(DB.txns.filter(t => monthOf(t.date)===mk)), all = totals(DB.txns);
+  const savings = m.inc ? (m.net/m.inc*100) : 0;
+  const loanOut = DB.loans.filter(l=>l.dir==="given").reduce((s,l)=>s+toBase(outstanding(l),l.cur),0);
+  const loanIn = DB.loans.filter(l=>l.dir==="taken").reduce((s,l)=>s+toBase(outstanding(l),l.cur),0);
+  const metalVal = DB.assets.filter(a=>a.kind!=="fx").reduce((s,a)=>s+toBase(metalValue(a), a.cur||"INR"),0);
+  const soon = DB.bills.filter(b=>!b.done && daysBetween(today(), b.due) <= 14).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,5);
+  const recent = [...DB.txns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  return `
+  <div class="card">
+    <div class="sub">${new Date().toLocaleString("en",{month:"long",year:"numeric"})} · net position</div>
+    <div class="stat ${m.net>=0?"pos":"neg"}">${money(m.net)}</div>
+    <div class="row" style="margin-top:14px">
+      <div><label>In</label><div class="stat sm pos">${money(m.inc)}</div></div>
+      <div><label>Out</label><div class="stat sm neg">${money(m.exp)}</div></div>
+      <div><label>Saved</label><div class="stat sm">${savings.toFixed(0)}%</div></div>
+    </div>
+  </div>
+  ${soon.length ? `<div class="card"><h2>Coming due</h2><div class="sub">Next fortnight</div>
+    ${soon.map(b => { const d = daysBetween(today(), b.due);
+      return `<div class="item"><div><div class="t">${esc(b.name)}</div><div class="m">${b.due} · ${d<0?`${-d}d overdue`:d===0?"today":`in ${d}d`}</div></div>
+      <div class="amt ${d<0?"neg":""}">${money(n(b.amt), b.cur)}</div></div>`; }).join("")}</div>` : ""}
+  <div class="card"><h2>Six-month rhythm</h2><div class="sub">Income above the line, spend below</div>${sparkChart(byMonth(6))}</div>
+  <div class="card"><h2>Where this month went</h2>${barRows(byCat(DB.txns.filter(t=>monthOf(t.date)===mk),"expense"),"var(--rust)")}</div>
+  <div class="card">
+    <h2>Standing position</h2>
+    <div class="kv"><span class="k">Lifetime net</span><span class="v ${all.net>=0?"pos":"neg"}">${money(all.net)}</span></div>
+    <div class="kv"><span class="k">Owed to me</span><span class="v pos">${money(loanOut)}</span></div>
+    <div class="kv"><span class="k">I owe</span><span class="v neg">${money(loanIn)}</span></div>
+    <div class="kv"><span class="k">Metals held</span><span class="v">${money(metalVal)}</span></div>
+    <div class="kv"><span class="k">Entries recorded</span><span class="v">${DB.txns.length}</span></div>
+  </div>
+  <div class="card"><h2>Latest entries</h2>
+    ${recent.length ? recent.map(txRow).join("") : `<div class="empty">Nothing yet. Add an entry, or import a statement.</div>`}</div>`;
+};
+
+VIEWS.add = () => `
+  <div class="card">
+    <h2>Record an entry</h2>
+    <div class="sub">Reason and pattern are what make the analysis worth reading later.</div>
+    <div class="seg" id="typeSeg"><button data-v="expense" class="on">Money out</button><button data-v="income">Money in</button></div>
+    <div class="grid2">
+      <div class="field"><label>Date</label><input type="date" id="f_date" value="${today()}"></div>
+      <div class="field"><label>Amount</label><input type="number" inputmode="decimal" id="f_amt" placeholder="0.00"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Currency</label><select id="f_cur">${Object.keys(CUR).map(c=>`<option ${c===DB.meta.base?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Category</label><select id="f_cat"></select></div>
+    </div>
+    <div class="field"><label>Reason / trigger</label><input id="f_reason" placeholder="quarterly supplier payment · impulse · festival"></div>
+    <div class="grid2">
+      <div class="field"><label>Pattern</label><select id="f_pat">
+        <option value="one-off">One-off</option><option value="recurring">Recurring</option><option value="seasonal">Seasonal</option>
+        <option value="essential">Essential</option><option value="discretionary">Discretionary</option><option value="emergency">Emergency</option></select></div>
+      <div class="field"><label>Account</label><input id="f_acct" placeholder="HDFC / ENBD / cash"></div>
+    </div>
+    <div class="field"><label>Note</label><input id="f_note" placeholder="optional"></div>
+    <button class="btn primary" id="addBtn">Add entry</button>
+  </div>`;
+WIRE.add = () => {
+  let type = "expense";
+  const fill = () => document.getElementById("f_cat").innerHTML = DB.cats[type].map(c=>`<option>${esc(c)}</option>`).join("");
+  fill();
+  document.getElementById("typeSeg").onclick = e => { const b = e.target.closest("button"); if(!b) return;
+    type = b.dataset.v; [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b)); fill(); };
+  document.getElementById("addBtn").onclick = () => {
+    const amt = n(document.getElementById("f_amt").value);
+    if(amt <= 0) return toast("Enter an amount above zero");
+    DB.txns.push({id:uid(), type, date:document.getElementById("f_date").value, amt,
+      cur:document.getElementById("f_cur").value, cat:document.getElementById("f_cat").value,
+      reason:document.getElementById("f_reason").value.trim(), pat:document.getElementById("f_pat").value,
+      acct:document.getElementById("f_acct").value.trim(), note:document.getElementById("f_note").value.trim()});
+    mark(); toast("Entry added"); go("add");
+  };
+};
+
+let lf = {q:"", type:"all", month:""};
+VIEWS.ledger = () => {
+  let list = [...DB.txns].sort((a,b)=>b.date.localeCompare(a.date));
+  if(lf.type!=="all") list = list.filter(t=>t.type===lf.type);
+  if(lf.month) list = list.filter(t=>monthOf(t.date)===lf.month);
+  if(lf.q){ const q = lf.q.toLowerCase(); list = list.filter(t=>[t.cat,t.reason,t.note,t.acct].join(" ").toLowerCase().includes(q)); }
+  const t = totals(list);
+  const months = [...new Set(DB.txns.map(x=>monthOf(x.date)))].sort().reverse();
+  return `
+  <div class="card"><h2>Ledger</h2><div class="sub">${list.length} entries · net ${money(t.net)}</div>
+    <div class="field"><input id="lq" placeholder="Search category, reason, account…" value="${esc(lf.q)}"></div>
+    <div class="row">
+      <select id="ltype"><option value="all">All</option><option value="income" ${lf.type==="income"?"selected":""}>In</option><option value="expense" ${lf.type==="expense"?"selected":""}>Out</option></select>
+      <select id="lmonth"><option value="">All months</option>${months.map(m=>`<option ${lf.month===m?"selected":""}>${m}</option>`).join("")}</select>
+    </div></div>
+  <div class="card">${list.length ? list.slice(0,300).map(t=>`<div class="item">
+      <div style="flex:1"><div class="t">${esc(t.cat)}${t.note?` <span class="mute">· ${esc(t.note)}</span>`:""}</div>
+      <div class="m">${t.date} · ${esc(t.pat||"")} · ${esc(t.reason||"—")}</div></div>
+      <div style="text-align:right"><div class="amt ${t.type==="income"?"pos":"neg"}">${t.type==="income"?"+":"−"}${money(t.amt,t.cur).replace("−","")}</div>
+      <button class="btn sm danger" data-del="${t.id}" style="margin-top:6px;padding:4px 8px;font-size:11px">Delete</button></div></div>`).join("")
+    : `<div class="empty">No entries match.</div>`}
+    ${list.length>300?`<div class="mute" style="text-align:center;font-size:12px;margin-top:10px">Showing newest 300 of ${list.length}</div>`:""}</div>`;
+};
+WIRE.ledger = () => {
+  const q = document.getElementById("lq");
+  q.oninput = () => { lf.q = q.value; const p = q.selectionStart; rerender();
+    const nq = document.getElementById("lq"); nq.focus(); nq.setSelectionRange(p,p); };
+  document.getElementById("ltype").onchange = e => { lf.type = e.target.value; rerender(); };
+  document.getElementById("lmonth").onchange = e => { lf.month = e.target.value; rerender(); };
+  document.getElementById("view").addEventListener("click", e => {
+    const b = e.target.closest("[data-del]"); if(!b) return;
+    DB.txns = DB.txns.filter(x=>x.id!==b.dataset.del); mark(); rerender();
+  });
+};
+
+/* ═══════════ IMPORT (CSV + PDF) ═══════════ */
+let parsed = null, staged = [];
+VIEWS.import = () => `
+  <div class="card">
+    <h2>Import a statement</h2>
+    <div class="sub">CSV or a text-based PDF. The file is read inside this page; nothing is uploaded anywhere.</div>
+    <div class="row">
+      <button class="btn" id="pickCsv">CSV file</button>
+      <button class="btn" id="pickPdf">PDF statement</button>
+    </div>
+    <input type="file" id="csvIn" accept=".csv,.txt,text/csv" class="hide">
+    <input type="file" id="pdfIn" accept=".pdf,application/pdf" class="hide">
+    <div style="height:12px"></div>
+    <label>…or paste rows here</label>
+    <textarea id="csvPaste" placeholder="Date,Narration,Debit,Credit&#10;01/04/2026,UPI-BIGBASKET,2340.00,"></textarea>
+    <div style="height:10px"></div>
+    <button class="btn" id="parseBtn">Read rows</button>
+    <div id="pdfNote"></div>
+  </div>
+  <div id="mapArea"></div>
+  <div class="card">
+    <h2>On linking your bank login</h2>
+    <p class="warn">You asked for the app to sign in to your bank each month and pull the statement itself. I have deliberately not built that, and I would push back on any app that offers it.</p>
+    <p class="warn" style="margin-top:8px">Handing net-banking credentials to software means three things at once: it breaches your bank's terms of use, which in India and the UAE shifts liability for any fraudulent transaction from the bank onto you; it cannot work from a page like this one anyway, because banks block cross-site requests and require a fresh OTP per session; and making it work would require a server holding your password in a form it can replay — which destroys the entire point of a vault only you can open.</p>
+    <p class="warn" style="margin-top:8px"><strong>The legitimate route in India is the Account Aggregator framework.</strong> RBI-licensed AAs — Finvu, OneMoney, Anumati, CAMSFinServ — deliver bank data on your explicit, revocable consent, with no password ever shared. The catch is that only a registered Financial Information User can pull from them, so using it means building a licensed backend, not a single file. Perfios, Setu and Plaid (US) sit on the same principle. If this ever becomes a real product rather than your own tool, that is the door to walk through.</p>
+    <p class="warn" style="margin-top:8px"><strong>What actually gets you close, today:</strong> set your bank to email you a statement monthly, then drop the PDF or CSV straight in here. That is one action a month against a standing bill reminder, and it keeps the vault sealed.</p>
+  </div>`;
+WIRE.import = () => {
+  document.getElementById("pickCsv").onclick = () => document.getElementById("csvIn").click();
+  document.getElementById("pickPdf").onclick = () => document.getElementById("pdfIn").click();
+  document.getElementById("csvIn").onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader(); r.onload = () => { document.getElementById("csvPaste").value = r.result; doParse(); };
+    r.readAsText(f);
+  };
+  document.getElementById("pdfIn").onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    const note = document.getElementById("pdfNote");
+    note.innerHTML = `<p class="warn" style="margin-top:10px">Reading ${esc(f.name)}…</p>`;
+    try{
+      const rows = await pdfToRows(await f.arrayBuffer());
+      if(!rows.length) throw new Error("No dated rows found. This PDF is probably a scan rather than text. Open it, select all, copy, and paste into the box above.");
+      document.getElementById("csvPaste").value = rows.join("\n");
+      note.innerHTML = `<p class="warn" style="margin-top:10px;color:var(--jade)">Found ${rows.length-1} dated rows. Check the mapping below — PDF layouts vary, so confirm the amount columns before importing.</p>`;
+      doParse();
+    }catch(err){
+      note.innerHTML = `<p class="warn" style="margin-top:10px;color:var(--rust)">${esc(err.message)}</p>`;
+    }
+  };
+  document.getElementById("parseBtn").onclick = doParse;
+};
+
+/* --- minimal PDF text extraction: FlateDecode + DecompressionStream --- */
+function bytesToLatin1(u8){ let s=""; const CH=0x8000; for(let i=0;i<u8.length;i+=CH) s+=String.fromCharCode.apply(null,u8.subarray(i,i+CH)); return s; }
+async function inflateAny(u8){
+  for(const fmt of ["deflate","deflate-raw"]){
+    try{
+      const st = new Blob([u8]).stream().pipeThrough(new DecompressionStream(fmt));
+      return new Uint8Array(await new Response(st).arrayBuffer());
+    }catch(e){}
+  }
+  return null;
+}
+function ascii85(u8){
+  const s = bytesToLatin1(u8).replace(/^<~/,"").replace(/~>[\s\S]*$/,"").replace(/\s/g,"");
+  const out = []; let tuple = [], i = 0;
+  while(i < s.length){
+    const c = s[i++];
+    if(c === "z" && tuple.length === 0){ out.push(0,0,0,0); continue; }
+    tuple.push(c.charCodeAt(0) - 33);
+    if(tuple.length === 5){
+      let v = 0; for(const d of tuple) v = v*85 + d;
+      out.push((v>>>24)&255, (v>>>16)&255, (v>>>8)&255, v&255);
+      tuple = [];
+    }
+  }
+  if(tuple.length){
+    const k = tuple.length;
+    while(tuple.length < 5) tuple.push(84);
+    let v = 0; for(const d of tuple) v = v*85 + d;
+    const b = [(v>>>24)&255, (v>>>16)&255, (v>>>8)&255, v&255];
+    for(let j = 0; j < k-1; j++) out.push(b[j]);
+  }
+  return new Uint8Array(out);
+}
+function asciiHex(u8){
+  const s = bytesToLatin1(u8).replace(/>[\s\S]*$/,"").replace(/[^0-9A-Fa-f]/g,"");
+  const out = new Uint8Array(Math.floor(s.length/2));
+  for(let i = 0; i < out.length; i++) out[i] = parseInt(s.substr(i*2,2),16);
+  return out;
+}
+async function applyFilters(data, dict){
+  const m = dict.match(/\/Filter\s*(\[[^\]]*\]|\/[A-Za-z0-9]+)/);
+  if(!m) return data;
+  const names = m[1].match(/\/[A-Za-z0-9]+/g) || [];
+  for(const raw of names){
+    const f = raw.slice(1);
+    if(f === "ASCII85Decode") data = ascii85(data);
+    else if(f === "ASCIIHexDecode") data = asciiHex(data);
+    else if(f === "FlateDecode"){ const inf = await inflateAny(data); if(!inf) return null; data = inf; }
+    else if(f === "LZWDecode" || f === "RunLengthDecode") return null;
+  }
+  return data;
+}
+function pdfUnescape(s){
+  return s.replace(/\\([nrtbf()\\]|[0-7]{1,3})/g, (m,g) => {
+    const map = {n:"\n", r:"\r", t:"\t", b:"\b", f:"\f", "(":"(", ")":")", "\\":"\\"};
+    return map[g] !== undefined ? map[g] : String.fromCharCode(parseInt(g,8));
+  });
+}
+function contentToLines(txt){
+  const items = [];
+  let tm = [1,0,0,1,0,0], leading = 0, stack = [], size = 10;
+  const re = /\[((?:[^\[\]\\]|\\.)*)\]|\(((?:[^()\\]|\\.)*)\)|<([0-9A-Fa-f\s]*)>|(-?[\d.]+)|\/([^\s\/\[\]<>(){}]+)|(T[dDmLjJ*fc]|BT|ET|'|")/g;
+  let m;
+  const put = str => { if(str){ const sz = size * (Math.abs(tm[3]) || 1);
+    items.push({x:tm[4], y:tm[5], s:str, w:str.length*sz*0.5}); } };
+  const hex = h => { h = h.replace(/\s/g,""); let o=""; for(let i=0;i<h.length;i+=4){ const c = parseInt(h.substr(i,4),16); if(!isNaN(c)&&c) o+=String.fromCharCode(c<256?c:c&0xff);} return o; };
+  while((m = re.exec(txt))){
+    if(m[1] !== undefined){ // TJ array
+      let out = "";
+      const inner = /\(((?:[^()\\]|\\.)*)\)|<([0-9A-Fa-f\s]*)>|(-?[\d.]+)/g; let k;
+      while((k = inner.exec(m[1]))){
+        if(k[1] !== undefined) out += pdfUnescape(k[1]);
+        else if(k[2] !== undefined) out += hex(k[2]);
+        else if(parseFloat(k[3]) < -140) out += " ";
+      }
+      stack.push({t:"s", v:out});
+    }
+    else if(m[2] !== undefined) stack.push({t:"s", v:pdfUnescape(m[2])});
+    else if(m[3] !== undefined) stack.push({t:"s", v:hex(m[3])});
+    else if(m[4] !== undefined) stack.push({t:"n", v:parseFloat(m[4])});
+    else if(m[5] !== undefined) stack.push({t:"name"});
+    else {
+      const op = m[6], num = i => { const a = stack.filter(z=>z.t==="n"); return a.length>=i ? a[a.length-i].v : 0; };
+      if(op === "BT") tm = [1,0,0,1,0,0];
+      else if(op === "Tf"){ const a = stack.filter(z=>z.t==="n"); if(a.length) size = Math.abs(a[a.length-1].v) || 10; }
+      else if(op === "Tm"){ const a = stack.filter(z=>z.t==="n").slice(-6).map(z=>z.v); if(a.length===6) tm = a; }
+      else if(op === "Td" || op === "TD"){ tm[4] += num(2); tm[5] += num(1); if(op==="TD") leading = -num(1); }
+      else if(op === "TL") leading = num(1);
+      else if(op === "T*") tm[5] -= leading;
+      else if(op === "Tj" || op === "TJ" || op === "'" || op === '"'){
+        if(op === "'" || op === '"') tm[5] -= leading;
+        const last = [...stack].reverse().find(z=>z.t==="s");
+        if(last) put(last.v);
+      }
+      stack = [];
+    }
+  }
+  const lines = {};
+  items.forEach(it => { const key = Math.round(it.y); (lines[key] = lines[key] || []).push(it); });
+  return Object.keys(lines).map(Number).sort((a,b)=>b-a).map(y => {
+    const row = lines[y].sort((a,b)=>a.x-b.x), cells = [];
+    row.forEach(it => {
+      const s = it.s.trim(); if(!s) return;
+      const prev = cells[cells.length-1];
+      if(prev && it.x - (prev.x + prev.w) < 3.5){ prev.s += (it.x - (prev.x + prev.w) > 0.8 ? " " : "") + s; prev.w += it.w; }
+      else cells.push({x:it.x, w:it.w, s});
+    });
+    return cells;
+  }).filter(r => r.length);
+}
+async function pdfToRows(buf){
+  if(typeof DecompressionStream === "undefined") throw new Error("This browser cannot decompress PDFs. Copy the text out of the PDF and paste it above.");
+  const u8 = new Uint8Array(buf), s = bytesToLatin1(u8);
+  if(/\/Encrypt[\s\/<\[]/.test(s)) throw new Error("This PDF is password-protected. Open it, then Print → Save as PDF to strip the password, and try that file.");
+  let i = 0, chunks = [];
+  while((i = s.indexOf("stream", i)) !== -1){
+    const dictStart = s.lastIndexOf("<<", i);
+    const dict = dictStart >= 0 ? s.slice(Math.max(dictStart, i-800), i) : "";
+    let st = i + 6;
+    if(s[st] === "\r") st++;
+    if(s[st] === "\n") st++;
+    const end = s.indexOf("endstream", st);
+    if(end === -1) break;
+    if(/Image|DCTDecode|JPXDecode|CCITT|JBIG2/.test(dict)){ i = end + 9; continue; }
+    let data = await applyFilters(u8.subarray(st, end), dict);
+    if(!data){ i = end + 9; continue; }
+    const t = bytesToLatin1(data);
+    if(/(Tj|TJ)[\s\]]/.test(t)) chunks.push(t);
+    i = end + 9;
+  }
+  const lines = [];
+  for(const c of chunks) lines.push(...contentToLines(c));
+
+  const numRe = /^[-+(]?[\d,]*\d(?:\.\d{1,2})?\)?(?:\s?(?:cr|dr))?$/i;
+  const clean = c => c.replace(/\s?(cr|dr)$/i,"").replace(/[(),]/g,"");
+
+  // keep only lines that open with a date, and split each into words + positioned numbers
+  const recs = [];
+  lines.forEach(cells => {
+    let di = -1, d = "";
+    for(let k = 0; k < Math.min(cells.length, 3); k++){ const p = parseDate(cells[k].s); if(p){ d = p; di = k; break; } }
+    if(!d) return;
+    const nums = [], words = [];
+    let drcr = "";
+    cells.slice(di+1).forEach(c => {
+      if(numRe.test(c.s) && /\d/.test(c.s)){
+        const mk = c.s.match(/(cr|dr)$/i); if(mk) drcr = mk[1].toUpperCase();
+        nums.push({right: c.x + c.w, v: clean(c.s)});
+      } else words.push(c.s);
+    });
+    if(nums.length) recs.push({d, desc: words.join(" ").slice(0,80), nums, drcr});
+  });
+  if(!recs.length) return [];
+
+  // cluster the numbers by their right edge — that is what keeps debit, credit and balance apart
+  const edges = recs.flatMap(r => r.nums.map(x => x.right)).sort((a,b) => a-b);
+  const cols = [];
+  edges.forEach(e => {
+    const last = cols[cols.length-1];
+    if(last && e - last.max <= 14){ last.max = e; last.n++; }
+    else cols.push({min:e, max:e, n:1});
+  });
+  const centre = c => (c.min + c.max) / 2;
+  const keep = cols.slice(0, 6);
+
+  const rows = [["Date","Description", ...keep.map((c,i)=>`Amount ${i+1}`), "Dr/Cr"].join("\t")];
+  recs.forEach(r => {
+    const slots = new Array(keep.length).fill("");
+    r.nums.forEach(x => {
+      let best = 0, dist = Infinity;
+      keep.forEach((c,i) => { const dd = Math.abs(x.right - centre(c)); if(dd < dist){ dist = dd; best = i; } });
+      if(!slots[best]) slots[best] = x.v; else slots[Math.min(best+1, keep.length-1)] ||= x.v;
+    });
+    rows.push([r.d, r.desc, ...slots, r.drcr].join("\t"));
+  });
+  return rows;
+}
+
+function splitCSV(line){
+  const out = []; let cur = "", q = false;
+  for(let i = 0; i < line.length; i++){
+    const c = line[i];
+    if(q){ if(c === '"'){ if(line[i+1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if(c === '"') q = true;
+    else if(c === ',' || c === '\t' || c === ';'){ out.push(cur.trim()); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur.trim()); return out;
+}
+function parseDate(s){
+  s = String(s).trim(); let m;
+  if((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  if((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/))){
+    let y = m[3]; if(y.length === 2) y = "20"+y;
+    if(+m[1] > 31 || +m[2] > 12) return "";
+    return `${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  }
+  if((m = s.match(/^(\d{1,2})[\-\s\/]([A-Za-z]{3})[a-z]*[\-\s\/](\d{2,4})$/))){
+    const mo = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(m[2].toLowerCase())+1;
+    let y = m[3]; if(y.length === 2) y = "20"+y;
+    if(mo) return `${y}-${String(mo).padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  }
+  return "";
+}
+function doParse(){
+  const raw = document.getElementById("csvPaste").value.trim();
+  if(!raw) return toast("Nothing to read");
+  const rows = raw.split(/\r?\n/).filter(l=>l.trim()).map(splitCSV);
+  let hi = 0;
+  for(let i = 0; i < Math.min(rows.length, 25); i++){
+    const t = rows[i].filter(c => c && isNaN(parseFloat(c))).length;
+    if(t >= 2 && rows[i].length >= 3){ hi = i; break; }
+  }
+  parsed = {head: rows[hi], body: rows.slice(hi+1).filter(r => r.length >= 2)};
+  const guess = (...keys) => parsed.head.findIndex(h => keys.some(k => h.toLowerCase().includes(k)));
+  const g = {date:guess("date"), desc:guess("narration","description","particular","detail","remark","transaction"),
+             debit:guess("debit","withdraw"), credit:guess("credit","deposit"), amount:guess("amount 1","amount"), drcr:guess("dr/cr")};
+  const sel = (id,v) => `<select id="${id}">${["— none —",...parsed.head].map((h,i)=>
+    `<option value="${i-1}" ${i-1===v?"selected":""}>${i?`${i} · `:""}${esc(h)}</option>`).join("")}</select>`;
+  document.getElementById("mapArea").innerHTML = `
+    <div class="card"><h2>Map the columns</h2><div class="sub">${parsed.body.length} rows found</div>
+      <div class="field"><label>Date</label>${sel("m_date", g.date)}</div>
+      <div class="field"><label>Description</label>${sel("m_desc", g.desc)}</div>
+      <div class="grid2">
+        <div class="field"><label>Debit (out)</label>${sel("m_deb", g.debit)}</div>
+        <div class="field"><label>Credit (in)</label>${sel("m_cre", g.credit)}</div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Single amount column</label>${sel("m_amt", g.debit>=0?-1:g.amount)}</div>
+        <div class="field"><label>Dr/Cr marker</label>${sel("m_drcr", g.drcr)}</div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Currency</label><select id="m_cur">${Object.keys(CUR).map(c=>`<option ${c===DB.meta.base?"selected":""}>${c}</option>`).join("")}</select></div>
+        <div class="field"><label>Account label</label><input id="m_acct" placeholder="HDFC current"></div>
+      </div>
+      <button class="btn" id="previewBtn">Preview</button>
+      <div id="prev"></div></div>`;
+  document.getElementById("previewBtn").onclick = doPreview;
+  ["m_date","m_desc","m_deb","m_cre","m_amt","m_drcr"].forEach(id => document.getElementById(id).onchange = doPreview);
+  doPreview();
+}
+function classify(desc){
+  const d = (desc||"").toLowerCase();
+  for(const r of DB.rules) if(r.kw.split(",").some(k => k.trim() && d.includes(k.trim().toLowerCase()))) return r;
+  return null;
+}
+function doPreview(){
+  const iv = id => parseInt(document.getElementById(id).value, 10);
+  const c = {date:iv("m_date"), desc:iv("m_desc"), deb:iv("m_deb"), cre:iv("m_cre"), amt:iv("m_amt"), drcr:iv("m_drcr")};
+  const cur = document.getElementById("m_cur").value, acct = document.getElementById("m_acct").value.trim();
+  staged = [];
+  parsed.body.forEach(r => {
+    const date = parseDate(r[c.date] || ""); if(!date) return;
+    const desc = (r[c.desc] || "").replace(/\s+/g," ").trim();
+    let amt = 0, type = "expense", explicit = false;
+    if(c.amt >= 0 && r[c.amt]){
+      const v = n(r[c.amt]); amt = Math.abs(v);
+      if(c.drcr >= 0 && r[c.drcr]){ type = /cr/i.test(r[c.drcr]) ? "income" : "expense"; explicit = true; }
+      else { type = v >= 0 ? "income" : "expense"; explicit = v < 0 || v > 0; }
+    } else {
+      const d = c.deb >= 0 ? n(r[c.deb]) : 0, cr = c.cre >= 0 ? n(r[c.cre]) : 0;
+      if(cr > 0){ amt = cr; type = "income"; explicit = true; }
+      else if(d > 0){ amt = d; type = "expense"; explicit = true; }
+    }
+    if(!amt) return;
+    const g = classify(desc);
+    if(g && !explicit) type = g.type;
+    const cat = g ? g.cat : (type === "income" ? "Other income" : "Other expense");
+    staged.push({id:uid(), type, date, amt, cur, cat, reason:desc.slice(0,60), pat:"one-off", acct, note:"", _auto:!!g});
+  });
+  const isDupe = s => DB.txns.some(t => t.date===s.date && Math.abs(t.amt-s.amt)<0.01 && t.cur===s.cur);
+  const dupes = staged.filter(isDupe).length, auto = staged.filter(s=>s._auto).length;
+  document.getElementById("prev").innerHTML = `
+    <div style="height:1px;background:var(--line);margin:16px 0"></div>
+    <div class="kv"><span class="k">Rows ready</span><span class="v">${staged.length}</span></div>
+    <div class="kv"><span class="k">Auto-categorised</span><span class="v">${auto}</span></div>
+    <div class="kv"><span class="k">Look like duplicates</span><span class="v ${dupes?"neg":""}">${dupes}</span></div>
+    <div style="height:12px"></div>
+    <div class="scroll"><table><thead><tr><th>Date</th><th>Detail</th><th>Category</th><th>Amount</th></tr></thead><tbody>
+    ${staged.slice(0,25).map(s=>`<tr><td>${s.date}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.reason)}</td><td>${esc(s.cat)}</td><td class="${s.type==="income"?"pos":"neg"}">${s.type==="income"?"+":"−"}${s.amt.toFixed(2)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div style="height:12px"></div>
+    <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--paper)">
+      <input type="checkbox" id="skipDup" checked style="width:auto;margin:0">Skip likely duplicates</label>
+    <div style="height:10px"></div>
+    <button class="btn primary" id="commitBtn">Import ${staged.length} entries</button>`;
+  document.getElementById("commitBtn").onclick = () => {
+    const skip = document.getElementById("skipDup").checked;
+    let added = 0;
+    staged.forEach(s => { if(skip && isDupe(s)) return; delete s._auto; DB.txns.push(s); added++; });
+    mark(); toast(`${added} entries imported`); go("ledger");
+  };
+}
+
+/* ═══════════ PATTERNS ═══════════ */
+VIEWS.patterns = () => {
+  const series = byMonth(12), active = series.filter(s=>s.inc||s.exp);
+  const avgExp = active.length ? active.reduce((s,x)=>s+x.exp,0)/active.length : 0;
+  const avgInc = active.length ? active.reduce((s,x)=>s+x.inc,0)/active.length : 0;
+  const patAgg = {};
+  DB.txns.filter(t=>t.type==="expense").forEach(t => patAgg[t.pat||"unlabelled"] = (patAgg[t.pat||"unlabelled"]||0) + toBase(t.amt,t.cur));
+  const reasons = {};
+  DB.txns.filter(t=>t.type==="expense" && t.reason).forEach(t => {
+    const k = t.reason.toLowerCase().slice(0,26);
+    reasons[k] = reasons[k] || {n:0, v:0, label:t.reason.slice(0,26)};
+    reasons[k].n++; reasons[k].v += toBase(t.amt,t.cur);
+  });
+  const recurring = Object.values(reasons).filter(r=>r.n>=3).sort((a,b)=>b.v-a.v).slice(0,10);
+  const catNow = byCat(DB.txns.filter(t=>monthOf(t.date)===series[series.length-1].key), "expense");
+  const catPrev = Object.fromEntries(byCat(DB.txns.filter(t=>monthOf(t.date)===(series[series.length-2]||{}).key), "expense"));
+  const drift = catNow.map(([k,v])=>[k,v,catPrev[k]||0]).filter(r=>r[2]>0)
+    .map(r=>[r[0],r[1],r[2],(r[1]-r[2])/r[2]*100]).sort((a,b)=>Math.abs(b[3])-Math.abs(a[3])).slice(0,7);
+  return `
+  <div class="card"><h2>Twelve months</h2>${sparkChart(series)}
+    <div class="kv"><span class="k">Average month in</span><span class="v pos">${money(avgInc)}</span></div>
+    <div class="kv"><span class="k">Average month out</span><span class="v neg">${money(avgExp)}</span></div>
+    <div class="kv"><span class="k">Average saved</span><span class="v">${avgInc?((avgInc-avgExp)/avgInc*100).toFixed(0):0}%</span></div>
+    <div class="kv"><span class="k">Runway on current spend</span><span class="v">${avgExp?(totals(DB.txns).net/avgExp).toFixed(1):"—"} months</span></div></div>
+  <div class="card"><h2>Spend by behaviour</h2><div class="sub">How much is genuinely fixed versus chosen</div>
+    ${barRows(Object.entries(patAgg).sort((a,b)=>b[1]-a[1]), "var(--violet)")}</div>
+  <div class="card"><h2>Repeating reasons</h2><div class="sub">Logged three or more times — your real subscriptions, named or not</div>
+    ${recurring.length ? recurring.map(r=>`<div class="item"><div><div class="t">${esc(r.label)}</div><div class="m">${r.n} times · ${money(r.v/r.n)} average</div></div><div class="amt neg">${money(r.v)}</div></div>`).join("")
+      : `<div class="empty">Nothing repeats yet.</div>`}</div>
+  <div class="card"><h2>Month-on-month drift</h2><div class="sub">Categories that moved most against last month</div>
+    ${drift.length ? `<div class="scroll"><table><thead><tr><th>Category</th><th>This</th><th>Last</th><th>Δ</th></tr></thead><tbody>
+      ${drift.map(d=>`<tr><td>${esc(d[0])}</td><td>${money(d[1])}</td><td>${money(d[2])}</td><td class="${d[3]>0?"neg":"pos"}">${d[3]>0?"+":""}${d[3].toFixed(0)}%</td></tr>`).join("")}
+      </tbody></table></div>` : `<div class="empty">Needs two months of data.</div>`}</div>
+  <div class="card"><h2>Income concentration</h2>${barRows(byCat(DB.txns,"income"),"var(--jade)")}</div>`;
+};
+
+/* ═══════════ LOANS ═══════════ */
+function loanMath(l){
+  const P = n(l.principal), r = n(l.rate)/100, t = n(l.years);
+  const nper = Math.max(1, Math.round(t*12)), i = r/12;
+  if(l.method === "simple"){ const interest = P*r*t; return {interest, total:P+interest, emi:(P+interest)/nper, nper}; }
+  if(l.method === "compound"){ const f = n(l.freq)||1, total = P*Math.pow(1+r/f, f*t); return {interest:total-P, total, emi:total/nper, nper}; }
+  if(i === 0) return {interest:0, total:P, emi:P/nper, nper};
+  const emi = P*i*Math.pow(1+i,nper)/(Math.pow(1+i,nper)-1);
+  return {interest:emi*nper-P, total:emi*nper, emi, nper};
+}
+const paidOn = l => (l.pays||[]).reduce((s,p)=>s+n(p.amt),0);
+const outstanding = l => Math.max(0, loanMath(l).total - paidOn(l));
+VIEWS.loans = () => {
+  const given = DB.loans.filter(l=>l.dir==="given"), taken = DB.loans.filter(l=>l.dir==="taken");
+  const card = l => { const m = loanMath(l), paid = paidOn(l), out = outstanding(l);
+    return `<details><summary>${esc(l.who||"Unnamed")} · ${money(n(l.principal),l.cur)} @ ${l.rate}% ${l.method==="emi"?"reducing":l.method}</summary>
+      <div class="kv"><span class="k">Principal</span><span class="v">${money(n(l.principal),l.cur)}</span></div>
+      <div class="kv"><span class="k">Rate / term</span><span class="v">${l.rate}% p.a. · ${l.years} yr</span></div>
+      <div class="kv"><span class="k">Interest</span><span class="v">${money(m.interest,l.cur)}</span></div>
+      <div class="kv"><span class="k">Total repayable</span><span class="v">${money(m.total,l.cur)}</span></div>
+      <div class="kv"><span class="k">Monthly</span><span class="v">${money(m.emi,l.cur)} × ${m.nper}</span></div>
+      <div class="kv"><span class="k">Received / paid</span><span class="v pos">${money(paid,l.cur)}</span></div>
+      <div class="kv"><span class="k">Outstanding</span><span class="v ${out?"neg":"pos"}">${money(out,l.cur)}</span></div>
+      <div style="height:12px"></div>
+      <div class="row"><input type="number" inputmode="decimal" placeholder="Log a payment" data-pay="${l.id}"><button class="btn sm" data-payadd="${l.id}">Log</button></div>
+      <div style="height:8px"></div>
+      <div class="row"><button class="btn sm" data-sched="${l.id}" style="width:100%">Schedule</button><button class="btn sm danger" data-loandel="${l.id}" style="width:100%">Delete</button></div>
+      <div id="sch_${l.id}"></div></details>`; };
+  return `
+  <div class="card"><h2>Add a loan</h2><div class="sub">Enter period and rate — interest, instalment and schedule follow.</div>
+    <div class="seg" id="dirSeg"><button data-v="given" class="on">I lent it</button><button data-v="taken">I borrowed it</button></div>
+    <div class="grid2"><div class="field"><label>Counterparty</label><input id="l_who"></div>
+      <div class="field"><label>Principal</label><input type="number" inputmode="decimal" id="l_p"></div></div>
+    <div class="grid2"><div class="field"><label>Rate % p.a.</label><input type="number" inputmode="decimal" id="l_r" placeholder="12"></div>
+      <div class="field"><label>Period (years)</label><input type="number" inputmode="decimal" id="l_y" placeholder="2"></div></div>
+    <div class="grid2"><div class="field"><label>Method</label><select id="l_m"><option value="emi">Reducing balance (EMI)</option><option value="simple">Simple interest</option><option value="compound">Compound</option></select></div>
+      <div class="field"><label>Currency</label><select id="l_c">${Object.keys(CUR).map(c=>`<option ${c===DB.meta.base?"selected":""}>${c}</option>`).join("")}</select></div></div>
+    <div class="grid2"><div class="field"><label>Compounding / yr</label><input type="number" id="l_f" value="1"></div>
+      <div class="field"><label>Start date</label><input type="date" id="l_d" value="${today()}"></div></div>
+    <button class="btn primary" id="loanAdd">Add loan</button></div>
+  <div class="card"><h2>Lent out</h2><div class="sub">${money(given.reduce((s,l)=>s+toBase(outstanding(l),l.cur),0))} still owed to you</div>
+    ${given.length?given.map(card).join(""):`<div class="empty">No loans given.</div>`}</div>
+  <div class="card"><h2>Borrowed</h2><div class="sub">${money(taken.reduce((s,l)=>s+toBase(outstanding(l),l.cur),0))} outstanding</div>
+    ${taken.length?taken.map(card).join(""):`<div class="empty">No loans taken.</div>`}</div>`;
+};
+WIRE.loans = () => {
+  let dir = "given";
+  document.getElementById("dirSeg").onclick = e => { const b = e.target.closest("button"); if(!b) return;
+    dir = b.dataset.v; [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b)); };
+  document.getElementById("loanAdd").onclick = () => {
+    const P = n(document.getElementById("l_p").value);
+    if(P <= 0) return toast("Enter a principal");
+    DB.loans.push({id:uid(), dir, who:document.getElementById("l_who").value.trim(), principal:P,
+      rate:n(document.getElementById("l_r").value), years:n(document.getElementById("l_y").value)||1,
+      method:document.getElementById("l_m").value, cur:document.getElementById("l_c").value,
+      freq:n(document.getElementById("l_f").value)||1, start:document.getElementById("l_d").value, pays:[]});
+    mark(); rerender();
+  };
+  document.getElementById("view").addEventListener("click", e => {
+    const add = e.target.closest("[data-payadd]");
+    if(add){ const inp = document.querySelector(`[data-pay="${add.dataset.payadd}"]`), v = n(inp.value);
+      if(v <= 0) return toast("Enter an amount");
+      const l = DB.loans.find(x=>x.id===add.dataset.payadd);
+      (l.pays = l.pays||[]).push({date:today(), amt:v}); mark(); rerender(); return; }
+    const del = e.target.closest("[data-loandel]");
+    if(del){ if(!confirm("Delete this loan and its payment history?")) return;
+      DB.loans = DB.loans.filter(x=>x.id!==del.dataset.loandel); mark(); rerender(); return; }
+    const sc = e.target.closest("[data-sched]");
+    if(sc){ const l = DB.loans.find(x=>x.id===sc.dataset.sched), m = loanMath(l);
+      let bal = n(l.principal), rows = "", i = n(l.rate)/1200;
+      for(let k = 1; k <= Math.min(m.nper, 360); k++){
+        let int, prin;
+        if(l.method === "emi"){ int = bal*i; prin = m.emi-int; } else { int = m.interest/m.nper; prin = n(l.principal)/m.nper; }
+        bal = Math.max(0, bal-prin);
+        rows += `<tr><td>${k}</td><td>${m.emi.toFixed(0)}</td><td>${prin.toFixed(0)}</td><td>${int.toFixed(0)}</td><td>${bal.toFixed(0)}</td></tr>`;
+      }
+      document.getElementById("sch_"+l.id).innerHTML = `<div style="height:12px"></div><div class="scroll"><table><thead><tr><th>#</th><th>Instal.</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+  });
+};
+
+/* ═══════════ METALS & FX ═══════════ */
+function metalValue(a){
+  const p = a.kind === "gold" ? (a.purity==="22" ? n(DB.metals.gold22) : n(DB.metals.gold24)) * (a.purity==="18" ? 18/24 : 1) : n(DB.metals.silver);
+  return n(a.qty) * p;
+}
+VIEWS.assets = () => {
+  const total = DB.assets.reduce((s,a)=>s + (a.kind==="fx" ? toBase(n(a.qty), a.purity) : toBase(metalValue(a), a.cur||"INR")), 0);
+  return `
+  <div class="card"><h2>Rates in force</h2><div class="sub">Typed in by you. Nothing is fetched, so nothing about you is broadcast.</div>
+    <div class="grid2"><div class="field"><label>Gold 24K / gram</label><input type="number" id="r_g24" value="${DB.metals.gold24}"></div>
+      <div class="field"><label>Gold 22K / gram</label><input type="number" id="r_g22" value="${DB.metals.gold22}"></div></div>
+    <div class="field"><label>Silver / gram</label><input type="number" id="r_ag" value="${DB.metals.silver}"></div>
+    <div style="height:1px;background:var(--line);margin:14px 0"></div>
+    <label>Currency rates — ${DB.meta.base} per 1 unit</label><div style="height:6px"></div>
+    ${Object.keys(CUR).map(c=>`<div class="row" style="margin-bottom:8px;align-items:center">
+      <div class="mono" style="flex:0 0 54px">${c}</div><input type="number" step="0.0001" data-rate="${c}" value="${DB.rates[c]??1}"></div>`).join("")}
+    <div style="height:10px"></div><button class="btn primary" id="saveRates">Save rates</button></div>
+  <div class="card"><h2>Holdings</h2><div class="sub">Valued at ${money(total)}</div>
+    <div class="grid2"><div class="field"><label>Type</label><select id="a_kind"><option value="gold">Gold</option><option value="silver">Silver</option><option value="fx">Currency</option></select></div>
+      <div class="field"><label>Purity / code</label><input id="a_pur" placeholder="24 / 22 / USD"></div></div>
+    <div class="grid2"><div class="field"><label>Quantity</label><input type="number" inputmode="decimal" id="a_qty"></div>
+      <div class="field"><label>Bought at (total)</label><input type="number" inputmode="decimal" id="a_cost"></div></div>
+    <div class="field"><label>Label</label><input id="a_lbl" placeholder="Bangles · Dubai locker · trading float"></div>
+    <button class="btn" id="a_add">Add holding</button><div style="height:14px"></div>
+    ${DB.assets.length ? DB.assets.map(a => {
+      const val = a.kind==="fx" ? toBase(n(a.qty), a.purity) : metalValue(a), gain = val - n(a.cost);
+      return `<div class="item"><div><div class="t">${esc(a.lbl||a.kind)} <span class="pill">${esc(a.kind)}${a.purity?" "+esc(a.purity):""}</span></div>
+        <div class="m">${a.qty} ${a.kind==="fx"?"units":"g"} · cost ${money(n(a.cost))}</div></div>
+        <div style="text-align:right"><div class="amt">${money(val)}</div><div class="m ${gain>=0?"pos":"neg"}">${gain>=0?"+":""}${money(gain)}</div>
+        <button class="btn sm danger" data-adel="${a.id}" style="margin-top:5px;padding:3px 7px;font-size:11px">Remove</button></div></div>`;
+    }).join("") : `<div class="empty">No holdings recorded.</div>`}</div>
+  <div class="card"><h2>On live rates</h2>
+    <p class="warn">This app makes no network requests at all, which is what keeps it silent. A live metals or forex feed means calling a third party who then sees your IP and your polling pattern. Check rates elsewhere and type them in — ten seconds a day.</p></div>`;
+};
+WIRE.assets = () => {
+  document.getElementById("saveRates").onclick = () => {
+    DB.metals.gold24 = n(document.getElementById("r_g24").value);
+    DB.metals.gold22 = n(document.getElementById("r_g22").value);
+    DB.metals.silver = n(document.getElementById("r_ag").value);
+    document.querySelectorAll("[data-rate]").forEach(i => DB.rates[i.dataset.rate] = n(i.value)||1);
+    mark(); toast("Rates saved"); rerender();
+  };
+  document.getElementById("a_add").onclick = () => {
+    const q = n(document.getElementById("a_qty").value);
+    if(q <= 0) return toast("Enter a quantity");
+    DB.assets.push({id:uid(), kind:document.getElementById("a_kind").value,
+      purity:document.getElementById("a_pur").value.trim().toUpperCase(), qty:q,
+      cost:n(document.getElementById("a_cost").value), lbl:document.getElementById("a_lbl").value.trim(), cur:"INR"});
+    mark(); rerender();
+  };
+  document.getElementById("view").addEventListener("click", e => {
+    const b = e.target.closest("[data-adel]"); if(!b) return;
+    DB.assets = DB.assets.filter(x=>x.id!==b.dataset.adel); mark(); rerender();
+  });
+};
+
+/* ═══════════ INDIA TAX ═══════════ */
+const NEW_SLABS = [[400000,0],[800000,.05],[1200000,.10],[1600000,.15],[2000000,.20],[2400000,.25],[Infinity,.30]];
+const OLD_SLABS = {below60:[[250000,0],[500000,.05],[1000000,.20],[Infinity,.30]],
+                   sr:[[300000,0],[500000,.05],[1000000,.20],[Infinity,.30]],
+                   supersr:[[500000,0],[1000000,.20],[Infinity,.30]]};
+function slabTax(inc, slabs){ let t = 0, prev = 0;
+  for(const [cap,rate] of slabs){ if(inc > prev) t += (Math.min(inc,cap)-prev)*rate; prev = cap; if(inc <= cap) break; } return t; }
+function surcharge(tax, inc, regime){
+  let r = 0;
+  if(inc > 50000000) r = regime==="new" ? .25 : .37;
+  else if(inc > 20000000) r = .25; else if(inc > 10000000) r = .15; else if(inc > 5000000) r = .10;
+  return tax * r;
+}
+function computeTax(){
+  const t = DB.tax, gross = n(t.gross);
+  const npsEmp = n(t.nps);
+  let tiNew = Math.max(0, gross - (t.salaried?75000:0) - npsEmp);
+  let taxNew = slabTax(tiNew, NEW_SLABS);
+  if(tiNew <= 1200000) taxNew = Math.max(0, taxNew - Math.min(60000, taxNew));
+  const totNew = (taxNew + surcharge(taxNew, tiNew, "new")) * 1.04;
+  const ded = Math.min(150000, n(t.d80c)) + Math.min(100000, n(t.d80d)) + n(t.hra) + Math.min(200000, n(t.homeLoan)) + n(t.other) + npsEmp;
+  let tiOld = Math.max(0, gross - (t.salaried?50000:0) - ded);
+  let taxOld = slabTax(tiOld, OLD_SLABS[t.age] || OLD_SLABS.below60);
+  if(tiOld <= 500000) taxOld = Math.max(0, taxOld - Math.min(12500, taxOld));
+  const totOld = (taxOld + surcharge(taxOld, tiOld, "old")) * 1.04;
+  return {tiNew, totNew, tiOld, totOld, ded, best: totNew <= totOld ? "new":"old", save: Math.abs(totNew-totOld)};
+}
+VIEWS.tax = () => {
+  const t = DB.tax, c = computeTax();
+  const room80c = Math.max(0, 150000 - n(t.d80c)), room80d = Math.max(0, 25000 - n(t.d80d));
+  return `
+  <div class="card"><h2>Income tax, FY 2026‑27</h2>
+    <div class="sub">AY 2027‑28. Budget 2026 left the slabs and the ₹60,000 rebate exactly where Budget 2025 set them.</div>
+    <div class="field"><label>Gross annual income (₹)</label><input type="number" inputmode="decimal" id="t_gross" value="${t.gross||""}" placeholder="1500000"></div>
+    <div class="grid2"><div class="field"><label>Age band</label><select id="t_age">
+      <option value="below60" ${t.age==="below60"?"selected":""}>Under 60</option>
+      <option value="sr" ${t.age==="sr"?"selected":""}>60 – 79</option>
+      <option value="supersr" ${t.age==="supersr"?"selected":""}>80 and over</option></select></div>
+      <div class="field"><label>Salaried</label><select id="t_sal"><option value="1" ${t.salaried?"selected":""}>Yes</option><option value="0" ${!t.salaried?"selected":""}>No</option></select></div></div>
+    <div class="grid2"><div class="field"><label>80C investments</label><input type="number" id="t_80c" value="${t.d80c||""}"></div>
+      <div class="field"><label>80D health cover</label><input type="number" id="t_80d" value="${t.d80d||""}"></div></div>
+    <div class="grid2"><div class="field"><label>Employer NPS 80CCD(2)</label><input type="number" id="t_nps" value="${t.nps||""}"></div>
+      <div class="field"><label>HRA exempt</label><input type="number" id="t_hra" value="${t.hra||""}"></div></div>
+    <div class="grid2"><div class="field"><label>Home loan interest 24(b)</label><input type="number" id="t_home" value="${t.homeLoan||""}"></div>
+      <div class="field"><label>Other deductions</label><input type="number" id="t_oth" value="${t.other||""}"></div></div>
+    <button class="btn primary" id="t_calc">Calculate</button></div>
+  <div class="card"><h2>New regime <span class="pill">${c.best==="new"?"cheaper":"default"}</span></h2>
+    <div class="kv"><span class="k">Taxable income</span><span class="v">${money(c.tiNew,"INR")}</span></div>
+    <div class="kv"><span class="k">Tax including 4% cess</span><span class="v">${money(c.totNew,"INR")}</span></div>
+    <div class="kv"><span class="k">Effective rate</span><span class="v">${t.gross?((c.totNew/n(t.gross))*100).toFixed(2):0}%</span></div></div>
+  <div class="card"><h2>Old regime ${c.best==="old"?`<span class="pill">cheaper</span>`:""}</h2>
+    <div class="kv"><span class="k">Deductions claimed</span><span class="v">${money(c.ded,"INR")}</span></div>
+    <div class="kv"><span class="k">Taxable income</span><span class="v">${money(c.tiOld,"INR")}</span></div>
+    <div class="kv"><span class="k">Tax including 4% cess</span><span class="v">${money(c.totOld,"INR")}</span></div></div>
+  <div class="card"><h2>Verdict</h2><div class="stat ${c.save?"pos":""}">${money(c.save,"INR")}</div>
+    <div class="sub" style="margin-top:6px">saved by filing under the <strong>${c.best}</strong> regime</div></div>
+  <div class="card"><h2>Where the headroom is</h2><div class="sub">Old regime unless marked otherwise</div>
+    ${room80c>0?`<div class="item"><div><div class="t">₹${room80c.toLocaleString("en-IN")} of 80C unused</div><div class="m">ELSS · PPF · EPF · life premium · 5-yr tax FD · home loan principal · tuition fees</div></div></div>`:""}
+    ${room80d>0?`<div class="item"><div><div class="t">₹${room80d.toLocaleString("en-IN")} of 80D unused</div><div class="m">Health premium for self and family; a further ₹50,000 for parents over 60</div></div></div>`:""}
+    <div class="item"><div><div class="t">Employer NPS, 80CCD(2)</div><div class="m">The one large deduction that survives in the new regime — up to 14% of basic. If your employer will restructure salary to route part of it into NPS, it cuts tax under either regime.</div></div></div>
+    <div class="item"><div><div class="t">80CCD(1B) — an extra ₹50,000 for NPS</div><div class="m">Old regime only, on top of the 80C ceiling.</div></div></div>
+    <div class="item"><div><div class="t">Home loan interest, section 24(b)</div><div class="m">Up to ₹2,00,000 on a self-occupied property; a let-out property has no cap, though set-off against other income is limited to ₹2,00,000 a year.</div></div></div>
+    <div class="item"><div><div class="t">Harvest long-term equity gains annually</div><div class="m">₹1.25 lakh of LTCG on listed equity is exempt each year. Selling and rebuying up to that limit resets your cost base at no tax cost.</div></div></div>
+    <div class="item"><div><div class="t">80G donations · 80E education loan interest · 80TTA/80TTB</div><div class="m">Routinely forgotten. 80E has no ceiling for eight years; 80TTB gives seniors ₹50,000 on interest.</div></div></div>
+    <div class="item"><div><div class="t">If you are non-resident</div><div class="m">Residency decides what India can tax at all. Day counts, deemed-residency rules and treaty relief change the answer completely — worth a session with a CA rather than a slab table.</div></div></div></div>
+  <div class="card"><p class="warn">These figures follow the published FY 2026‑27 slab structure and exist to help you compare options, not to file a return. Marginal relief and special-rate income are simplified. Confirm anything material against incometax.gov.in or with a chartered accountant.</p></div>`;
+};
+WIRE.tax = () => {
+  document.getElementById("t_calc").onclick = () => {
+    const g = id => n(document.getElementById(id).value);
+    Object.assign(DB.tax, {gross:g("t_gross"), age:document.getElementById("t_age").value,
+      salaried:document.getElementById("t_sal").value==="1", d80c:g("t_80c"), d80d:g("t_80d"),
+      nps:g("t_nps"), hra:g("t_hra"), homeLoan:g("t_home"), other:g("t_oth")});
+    mark(); rerender();
+  };
+};
+
+/* ═══════════ INVESTING ═══════════ */
+function score(w){
+  const cl = (v,a,b) => Math.max(0, Math.min(1, (v-a)/(b-a)));
+  const parts = [["Valuation", 1-cl(n(w.pe),8,60), .2], ["Return on equity", cl(n(w.roe),5,30), .2],
+    ["Balance sheet", 1-cl(n(w.de),0,2), .2], ["Growth", cl(n(w.growth),0,30), .2], ["Momentum", cl(n(w.mom),-20,40), .2]];
+  return {total: parts.reduce((s,p)=>s+p[1]*p[2],0)*100, parts};
+}
+VIEWS.invest = () => {
+  const list = DB.watch.map(w=>({...w, s:score(w)})).sort((a,b)=>b.s.total-a.s.total);
+  return `
+  <div class="card"><h2>Read this first</h2>
+    <p class="warn">No app can tell you which stocks will do well, and one that claims to is selling something. What this page does instead is hold you to a consistent standard: enter the five figures that matter for each name, and every candidate is scored the same way — so a company you like emotionally has to survive the same arithmetic as one you do not. Not investment advice. For anything sizeable, use a SEBI-registered adviser in India or a licensed adviser in the US.</p></div>
+  <div class="card"><h2>Add to the watchlist</h2>
+    <div class="grid2"><div class="field"><label>Ticker</label><input id="w_t" placeholder="TCS / AAPL"></div>
+      <div class="field"><label>Market</label><select id="w_m"><option>India</option><option>USA</option></select></div></div>
+    <div class="grid2"><div class="field"><label>P/E ratio</label><input type="number" inputmode="decimal" id="w_pe"></div>
+      <div class="field"><label>ROE %</label><input type="number" inputmode="decimal" id="w_roe"></div></div>
+    <div class="grid2"><div class="field"><label>Debt / equity</label><input type="number" inputmode="decimal" id="w_de"></div>
+      <div class="field"><label>Revenue growth %</label><input type="number" inputmode="decimal" id="w_g"></div></div>
+    <div class="grid2"><div class="field"><label>12-month price move %</label><input type="number" inputmode="decimal" id="w_mom"></div>
+      <div class="field"><label>Target weight %</label><input type="number" inputmode="decimal" id="w_alloc"></div></div>
+    <div class="field"><label>Your thesis in one line</label><input id="w_th" placeholder="Why this, why now, and what would prove you wrong"></div>
+    <button class="btn primary" id="w_add">Add</button></div>
+  <div class="card"><h2>Ranked</h2><div class="sub">Same yardstick, every name</div>
+    ${list.length ? list.map(w=>`<details><summary>${esc(w.t)} <span class="pill">${esc(w.m)}</span> · ${w.s.total.toFixed(0)}/100</summary>
+      ${w.s.parts.map(p=>`<div class="bar"><div class="lbl">${p[0]}</div><div class="track"><div class="fill" style="width:${(p[1]*100).toFixed(0)}%;background:${p[1]>.6?"var(--jade)":p[1]>.35?"var(--brass)":"var(--rust)"}"></div></div><div class="val">${(p[1]*100).toFixed(0)}</div></div>`).join("")}
+      <div class="kv"><span class="k">P/E · ROE · D/E</span><span class="v">${w.pe} · ${w.roe}% · ${w.de}</span></div>
+      <div class="kv"><span class="k">Growth · momentum</span><span class="v">${w.growth}% · ${w.mom}%</span></div>
+      <div class="kv"><span class="k">Target weight</span><span class="v">${w.alloc||0}%</span></div>
+      ${w.th?`<div style="margin-top:10px;font-size:13.5px;color:var(--mute)">${esc(w.th)}</div>`:""}
+      <div style="height:10px"></div><button class="btn sm danger" data-wdel="${w.id}">Remove</button></details>`).join("")
+      : `<div class="empty">Nothing on the watchlist.</div>`}</div>
+  <div class="card"><h2>Rules that survive contact with markets</h2>
+    <div class="item"><div><div class="t">Decide the sell before you buy</div><div class="m">Write the exit condition into the thesis field. A thesis with no falsifier is a hope.</div></div></div>
+    <div class="item"><div><div class="t">Position size does more work than stock picking</div><div class="m">A great pick at 1% of the portfolio changes nothing; a bad one at 30% changes everything.</div></div></div>
+    <div class="item"><div><div class="t">Tax drag is a real return</div><div class="m">India: 20% short-term and 12.5% long-term on listed equity, with ₹1.25 lakh a year of LTCG exempt. US holdings add estate-tax exposure above $60,000 for non-resident aliens — a detail most Indian investors in US stocks miss.</div></div></div>
+    <div class="item"><div><div class="t">Currency is a position whether you chose it or not</div><div class="m">Holding US stocks from India or the UAE is partly a bet on the dollar. Log the rate you bought at in Metals &amp; FX so you can see it separately.</div></div></div>
+    <div class="item"><div><div class="t">Index first, satellites after</div><div class="m">Most people who beat the index did so by owning it and adding steadily while others panicked.</div></div></div></div>`;
+};
+WIRE.invest = () => {
+  document.getElementById("w_add").onclick = () => {
+    const t = document.getElementById("w_t").value.trim().toUpperCase();
+    if(!t) return toast("Enter a ticker");
+    DB.watch.push({id:uid(), t, m:document.getElementById("w_m").value, pe:n(document.getElementById("w_pe").value),
+      roe:n(document.getElementById("w_roe").value), de:n(document.getElementById("w_de").value),
+      growth:n(document.getElementById("w_g").value), mom:n(document.getElementById("w_mom").value),
+      alloc:n(document.getElementById("w_alloc").value), th:document.getElementById("w_th").value.trim()});
+    mark(); rerender();
+  };
+  document.getElementById("view").addEventListener("click", e => {
+    const b = e.target.closest("[data-wdel]"); if(!b) return;
+    DB.watch = DB.watch.filter(x=>x.id!==b.dataset.wdel); mark(); rerender();
+  });
+};
+
+/* ═══════════ SETTINGS ═══════════ */
+VIEWS.settings = () => `
+  <div class="card"><h2>Vault</h2>
+    <div class="kv"><span class="k">Created</span><span class="v">${DB.meta.created}</span></div>
+    <div class="kv"><span class="k">Entries · bills · loans</span><span class="v">${DB.txns.length} · ${DB.bills.length} · ${DB.loans.length}</span></div>
+    <div class="kv"><span class="k">Device copy</span><span class="v">${hasStash()?"encrypted, present":"unavailable"}</span></div>
+    <div class="kv"><span class="k">Installed as app</span><span class="v">${window.matchMedia("(display-mode: standalone)").matches||navigator.standalone?"yes":"no"}</span></div>
+    <div style="height:12px"></div>
+    <div class="field"><label>Base currency</label><select id="s_base">${Object.keys(CUR).map(c=>`<option ${c===DB.meta.base?"selected":""}>${c}</option>`).join("")}</select></div>
+    <button class="btn primary" id="s_export">Export encrypted vault file</button><div style="height:10px"></div>
+    <button class="btn" id="s_csv">Export plain CSV (unencrypted)</button><div style="height:10px"></div>
+    <button class="btn" id="s_pass">Change passphrase</button><div style="height:10px"></div>
+    <button class="btn danger" id="s_wipe">Erase everything on this device</button></div>
+  <div class="card"><h2>Categorisation rules</h2><div class="sub">Keywords matched against statement descriptions, top rule wins</div>
+    ${DB.rules.map((r,i)=>`<div class="row" style="margin-bottom:8px">
+      <input data-rkw="${i}" value="${esc(r.kw)}"><input data-rcat="${i}" value="${esc(r.cat)}" style="max-width:34%">
+      <button class="btn sm danger" data-rdel="${i}" style="flex:0 0 auto">×</button></div>`).join("")}
+    <div style="height:8px"></div><button class="btn" id="r_add">Add rule</button>
+    <div style="height:8px"></div><button class="btn primary" id="r_save">Save rules</button></div>
+  <div class="card"><h2>Categories</h2>
+    <div class="field"><label>Income</label><textarea id="c_inc">${esc(DB.cats.income.join("\n"))}</textarea></div>
+    <div class="field"><label>Expense</label><textarea id="c_exp">${esc(DB.cats.expense.join("\n"))}</textarea></div>
+    <button class="btn primary" id="c_save">Save categories</button></div>
+  <div class="card"><h2>Giving this to someone else</h2>
+    <p class="warn">Send them the link to wherever you hosted it, or the folder of files. They install it and start their own vault with their own passphrase, and their numbers land in their own iCloud Drive. Two people running the same install never see each other's data, because the app itself holds none: everything lives in each person's encrypted <code>.lkv</code>. Never send anyone your <code>.lkv</code> unless you also mean to give them the passphrase.</p></div>`;
+WIRE.settings = () => {
+  document.getElementById("s_base").onchange = e => { DB.meta.base = e.target.value; mark(); rerender(); };
+  document.getElementById("s_export").onclick = exportVault;
+  document.getElementById("s_csv").onclick = () => {
+    if(!confirm("This writes an UNENCRYPTED file. Anyone who opens it reads every entry. Continue?")) return;
+    const head = "date,type,amount,currency,category,reason,pattern,account,note\n";
+    const body = DB.txns.map(t=>[t.date,t.type,t.amt,t.cur,t.cat,t.reason,t.pat,t.acct,t.note]
+      .map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([head+body],{type:"text/csv"}));
+    a.download = `ledger-plain-${today()}.csv`; a.click();
+  };
+  document.getElementById("s_pass").onclick = async () => {
+    const p1 = prompt("New passphrase (at least 8 characters):"); if(!p1) return;
+    if(p1.length < 8) return toast("Too short");
+    if(p1 !== prompt("Repeat it:")) return toast("They do not match");
+    PASS = p1; await stashNow(); toast("Changed — export a fresh vault file now");
+  };
+  document.getElementById("s_wipe").onclick = () => {
+    if(!confirm("Erase the encrypted copy on this device? Exported vault files stay safe. This cannot be undone.")) return;
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    PASS = null; DB = null; location.reload();
+  };
+  document.getElementById("r_add").onclick = () => { DB.rules.push({kw:"", cat:"Other expense", type:"expense"}); mark(); rerender(); };
+  document.getElementById("r_save").onclick = () => {
+    document.querySelectorAll("[data-rkw]").forEach(i => DB.rules[i.dataset.rkw].kw = i.value);
+    document.querySelectorAll("[data-rcat]").forEach(i => DB.rules[i.dataset.rcat].cat = i.value);
+    mark(); toast("Rules saved");
+  };
+  document.getElementById("view").addEventListener("click", e => {
+    const b = e.target.closest("[data-rdel]"); if(!b) return;
+    DB.rules.splice(+b.dataset.rdel,1); mark(); rerender();
+  });
+  document.getElementById("c_save").onclick = () => {
+    const cl = s => s.split("\n").map(x=>x.trim()).filter(Boolean);
+    DB.cats.income = cl(document.getElementById("c_inc").value);
+    DB.cats.expense = cl(document.getElementById("c_exp").value);
+    mark(); toast("Categories saved");
+  };
+};
+
+/* ═══════════ BOOT ═══════════ */
+window.addEventListener("beforeunload", e => { if(dirty){ e.preventDefault(); e.returnValue = ""; } });
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+paintLock();
+document.getElementById("pp").focus();
+</script>
+</body>
+</html>
