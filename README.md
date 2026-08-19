@@ -1,2 +1,0 @@
-# Ledgerkeep
-Personal financial tracker
